@@ -1,6 +1,6 @@
 {
   "name": "npm-cred",
-  "version": "2.0.1",
+  "version": "2.1.1",
   "description": "A secure CLI tool for managing multiple credential vaults",
   "type": "module",
   "main": "index.js",
