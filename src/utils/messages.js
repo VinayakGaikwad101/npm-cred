@@ -6,17 +6,17 @@ import {
 } from "./ui.js";
 
 export const displayWelcomeMessage = () => {
-  welcomeMessage("Welcome to npm-cred: credentials manager");
+  welcomeMessage("Secure Credential Management for npm Projects");
 };
 
 export const displayWarningMessage = () => {
-  warningMessage("This is a warning message");
+  warningMessage("This operation requires careful attention");
 };
 
 export const displayErrorMessage = () => {
-  errorMessage("This is an error msg");
+  errorMessage("An unexpected error occurred during the operation");
 };
 
 export const displaySuccessMessage = () => {
-  successMessage("This is success msg");
+  successMessage("Operation completed successfully");
 };
