@@ -7,40 +7,42 @@ import { encrypt, decrypt } from './crypto.js';
 
 class Vault {
   constructor(name, password, isUnlocked = false) {
-    // Skip validation if password is null (for force operations)
-    if (password !== null) {
-      if (!name || !password) {
-        displayErrorMessage("Name and password are required");
-        return;
-      }
-      if (name.length < 5) {
-        displayErrorMessage("Vault name must be at least 5 characters long");
-        return;
-      }
+    if (!name) {
+      displayErrorMessage("Name is required");
+      return;
+    }
+    if (name.length < 5) {
+      displayErrorMessage("Vault name must be at least 5 characters long");
+      return;
+    }
+    
+    this.name = name;
+    this.isUnlocked = isUnlocked;
+    this.credentials = [];
+
+    if (password) {
       if (password.length < 5) {
         displayErrorMessage("Vault password must be at least 5 characters long");
         return;
       }
-    }
-    
-    this.name = name;
-    this.password = password;
-    this.isUnlocked = isUnlocked;
-    this.credentials = [];
-    // Only encrypt if we have a password
-    if (password !== null) {
       this.encryptedData = encrypt(this.credentials, password);
+      this.password = password; // Store password for locking/unlocking
+    } else {
+      this.encryptedData = null; // No password means no encryption
     }
   }
 
   unlock(name, password) {
-    // Skip validation for force operations
-    if (password === null) {
-      return true;
+    if (!name) {
+      displayErrorMessage("Vault name is required");
+      return false;
     }
-
     if (name.length < 5) {
       displayErrorMessage("Vault name must be at least 5 characters long");
+      return false;
+    }
+    if (!password) {
+      displayErrorMessage("Password is required to unlock the vault");
       return false;
     }
     if (password.length < 5) {
@@ -48,7 +50,7 @@ class Vault {
       return false;
     }
     
-    if (name === this.name && password === this.password) {
+    if (name === this.name) {
       try {
         // Decrypt credentials when unlocking
         this.credentials = decrypt(this.encryptedData, password);
@@ -66,11 +68,6 @@ class Vault {
   }
 
   lock(name) {
-    // Skip validation for force operations
-    if (this.password === null) {
-      return true;
-    }
-
     if (!name) {
       displayErrorMessage("Vault name is required for locking");
       return false;
@@ -96,8 +93,8 @@ class Vault {
     };
   }
 
-  static fromJSON(json, password) {
-    const vault = new Vault(json.name, password);
+  static fromJSON(json) {
+    const vault = new Vault(json.name, null); // Use null for password
     vault.encryptedData = json.encryptedData;
     return vault;
   }
