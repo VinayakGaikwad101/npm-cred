@@ -1,0 +1,43 @@
+# Development files
+.git/
+.gitignore
+.npmignore
+.vscode/
+
+# Storage
+.storage/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor files
+.idea/
+*.swp
+*.swo
+
+# Operating System
+.DS_Store
+Thumbs.db
+
+# Test files
+test/
+__tests__/
+*.test.js
+*.spec.js
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Source control
+.git*
+.hg*
+
+# Development config
+.eslintrc*
+.prettier*
+.editorconfig
+tsconfig.json
+jest.config.js

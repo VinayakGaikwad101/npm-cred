@@ -1,0 +1,47 @@
+{
+  "name": "npm-cred",
+  "version": "1.0.0",
+  "description": "A secure CLI tool for managing multiple credential vaults with support for GitHub, npm, and other services",
+  "type": "module",
+  "main": "index.js",
+  "bin": {
+    "npm-cred": "./index.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "cli",
+    "credentials",
+    "password-manager",
+    "vault",
+    "security",
+    "github-credentials",
+    "npm-credentials",
+    "credential-manager",
+    "secure-storage",
+    "multi-vault",
+    "password-vault",
+    "credentials-manager",
+    "development-tools",
+    "developer-tools",
+    "command-line"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^5.4.1",
+    "commander": "^13.1.0"
+  },
+  "engines": {
+    "node": ">=14.16"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/npm-cred"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/npm-cred/issues"
+  },
+  "homepage": "https://github.com/yourusername/npm-cred#readme"
+}
