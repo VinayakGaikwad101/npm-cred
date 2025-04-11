@@ -9,14 +9,14 @@ export const displayWelcomeMessage = () => {
   welcomeMessage("Secure Credential Management for npm Projects");
 };
 
-export const displayWarningMessage = () => {
-  warningMessage("This operation requires careful attention");
+export const displayWarningMessage = (message) => {
+  warningMessage(message);
 };
 
-export const displayErrorMessage = () => {
-  errorMessage("An unexpected error occurred during the operation");
+export const displayErrorMessage = (message) => {
+  errorMessage(message);
 };
 
-export const displaySuccessMessage = () => {
-  successMessage("Operation completed successfully");
+export const displaySuccessMessage = (message) => {
+  successMessage(message);
 };
