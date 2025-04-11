@@ -41,20 +41,24 @@ class Vault {
       displayErrorMessage("Vault name must be at least 5 characters long");
       return false;
     }
-    if (!password) {
-      displayErrorMessage("Password is required to unlock the vault");
-      return false;
-    }
-    if (password.length < 5) {
-      displayErrorMessage("Vault password must be at least 5 characters long");
-      return false;
-    }
     
     if (name === this.name) {
+      if (this.isUnlocked) {
+        displayWarningMessage(`Vault ${this.name} is already unlocked`);
+        return true; // Return true if already unlocked
+      }
+      if (!password) {
+        displayErrorMessage("Password is required to unlock the vault");
+        return false;
+      }
+      if (password.length < 5) {
+        displayErrorMessage("Vault password must be at least 5 characters long");
+        return false;
+      }
       try {
         // Decrypt credentials when unlocking
         this.credentials = decrypt(this.encryptedData, password);
-        this.isUnlocked = true;
+        this.isUnlocked = true; // Set the vault as unlocked
         displaySuccessMessage(`Vault ${this.name} unlocked successfully`);
         return true;
       } catch (error) {
@@ -73,10 +77,12 @@ class Vault {
       return false;
     }
     if (name === this.name) {
-      // Encrypt credentials when locking
-      this.encryptedData = encrypt(this.credentials, this.password);
-      this.credentials = []; // Clear decrypted data from memory
-      this.isUnlocked = false;
+      if (!this.isUnlocked) {
+        displayWarningMessage(`Vault ${this.name} is already locked`);
+        return false;
+      }
+      // Simply set the vault as locked
+      this.isUnlocked = false; // Set the vault as locked
       displaySuccessMessage(`Vault ${this.name} locked successfully`);
       return true;
     } else {
@@ -89,13 +95,15 @@ class Vault {
   toJSON() {
     return {
       name: this.name,
-      encryptedData: this.encryptedData
+      encryptedData: this.encryptedData,
+      isUnlocked: this.isUnlocked // Save the lock state
     };
   }
 
   static fromJSON(json) {
     const vault = new Vault(json.name, null); // Use null for password
     vault.encryptedData = json.encryptedData;
+    vault.isUnlocked = json.isUnlocked; // Set the lock state from JSON
     return vault;
   }
 }

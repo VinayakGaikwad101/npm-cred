@@ -59,6 +59,28 @@ export const createVaultCommand = async () => {
   }
 };
 
+// Add lock command
+export const lockVaultCommand = async () => {
+  try {
+    const nameResponse = await inquirer.prompt([{
+      type: 'input',
+      name: 'name',
+      message: 'Enter vault name to lock:',
+      validate: (input) => {
+        if (!input) {
+          return 'Vault name is required';
+        }
+        return true;
+      }
+    }]);
+
+    vaultManager.lockVault(nameResponse.name);
+  } catch (error) {
+    displayErrorMessage('Failed to lock vault: ' + error.message);
+  }
+};
+
 export const vaultCommands = {
-  create: createVaultCommand
+  create: createVaultCommand,
+  lock: lockVaultCommand // Add lock command to the exports
 };

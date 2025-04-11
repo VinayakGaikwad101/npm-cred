@@ -119,7 +119,10 @@ export const displayList = (title, items, options = {}) => {
 };
 
 export const displayVaults = (vaultManager) => {
-  const vaultNames = [...vaultManager.vaults.keys()];
+  const vaultNames = [...vaultManager.vaults.keys()].map(name => {
+    const vault = vaultManager.vaults.get(name);
+    return `${name} ${vault.isUnlocked ? '🔓' : '🔒'}`; // Show lock status
+  });
   displayList("Available Vaults", vaultNames, {
     color: "cyan",
     itemColor: "green",

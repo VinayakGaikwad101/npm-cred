@@ -36,6 +36,14 @@ program
   .description("Create a new vault")
   .action(vaultCommands.create);
 
+// Add command to lock a vault
+program
+  .command("lock <name>")
+  .description("Lock an existing vault")
+  .action((name) => {
+    vaultManager.lockVault(name);
+  });
+
 // Add command to delete a vault
 program
   .command("delete")

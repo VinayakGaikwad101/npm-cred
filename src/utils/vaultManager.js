@@ -72,6 +72,17 @@ export class VaultManager {
     return true;
   }
 
+  lockVault(name) {
+    const vault = this.vaults.get(name);
+    if (!vault) {
+      displayErrorMessage(`Vault ${name} does not exist`);
+      return false;
+    }
+    vault.lock(name);
+    this.saveVaults();
+    return true;
+  }
+
   unlockVault(name, password) {
     if (!name || !password) {
       displayErrorMessage("Please provide both name and password to unlock the vault");
