@@ -1,7 +1,7 @@
 {
   "name": "npm-cred",
   "version": "1.0.0",
-  "description": "A secure CLI tool for managing multiple credential vaults with support for GitHub, npm, and other services",
+  "description": "A secure CLI tool for managing multiple credential vaults",
   "type": "module",
   "main": "index.js",
   "bin": {
