@@ -1,6 +1,10 @@
-import { displayErrorMessage, displaySuccessMessage, displayWarningMessage } from "./messages.js";
+import {
+  displayErrorMessage,
+  displaySuccessMessage,
+  displayWarningMessage,
+} from "./messages.js";
 import { getVaultPath } from "./paths.js";
-import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync } from "fs";
 import Vault from "./vault.js";
 
 export class VaultManager {
@@ -14,9 +18,9 @@ export class VaultManager {
     const vaultPath = getVaultPath();
     if (existsSync(vaultPath)) {
       try {
-        const data = readFileSync(vaultPath, 'utf8');
+        const data = readFileSync(vaultPath, "utf8");
         const vaultData = JSON.parse(data);
-        
+
         // Initialize vaults without decrypting (will decrypt on unlock)
         Object.entries(vaultData).forEach(([name, data]) => {
           // Pass null as password when loading to skip validation
@@ -45,14 +49,16 @@ export class VaultManager {
 
   createVault(name, password) {
     if (!name || !password) {
-      displayErrorMessage("Please provide both name and password to create the vault");
+      displayErrorMessage(
+        "Please provide both name and password to create the vault"
+      );
       return false;
     }
     if (name.length < 5) {
       displayErrorMessage("Vault name must be at least 5 characters long");
       return false;
     }
-    if (name.includes(' ')) {
+    if (name.includes(" ")) {
       displayErrorMessage("Vault name cannot contain spaces");
       return false;
     }
@@ -61,7 +67,9 @@ export class VaultManager {
       return false;
     }
     if (this.vaults.has(name)) {
-      displayErrorMessage(`Vault with name ${name} already exists, please choose a different name`);
+      displayErrorMessage(
+        `Vault with name ${name} already exists, please choose a different name`
+      );
       return false;
     }
 
@@ -85,7 +93,9 @@ export class VaultManager {
 
   unlockVault(name, password) {
     if (!name || !password) {
-      displayErrorMessage("Please provide both name and password to unlock the vault");
+      displayErrorMessage(
+        "Please provide both name and password to unlock the vault"
+      );
       return false;
     }
     if (name.length < 5) {
@@ -171,14 +181,27 @@ export class VaultManager {
       return false;
     }
 
-    if (vault.unlock(vaultName, password)) {
+    // If the vault is already unlocked, add credential without unlocking
+    if (vault.isUnlocked) {
       const success = vault.addCredential(credential);
       if (success) {
-        vault.lock(vaultName);
         this.saveVaults();
         return true;
       }
+      return false;
     }
+    
+    // Otherwise try to unlock it
+    if (password && vault.unlock(vaultName, password)) {
+      const success = vault.addCredential(credential);
+      if (success) {
+        this.saveVaults();
+        return true;
+      }
+      return false;
+    }
+    
+    displayErrorMessage(`Cannot access vault ${vaultName} - Vault is locked. Please unlock it first.`);
     return false;
   }
 
@@ -190,11 +213,49 @@ export class VaultManager {
       return null;
     }
 
-    if (vault.unlock(vaultName, password)) {
-      const credentials = vault.getCredentials();
-      vault.lock(vaultName);
-      return credentials;
+    // If the vault is already unlocked, get credentials without unlocking
+    if (vault.isUnlocked) {
+      return vault.getCredentials();
     }
+    
+    // Otherwise try to unlock it
+    if (password && vault.unlock(vaultName, password)) {
+      return vault.getCredentials();
+    }
+    
+    displayErrorMessage(`Cannot access vault ${vaultName} - Vault is locked. Please unlock it first.`);
     return null;
+  }
+
+  // Delete a credential from a vault
+  deleteCredential(vaultName, password, credentialKey) {
+    const vault = this.vaults.get(vaultName);
+    if (!vault) {
+      displayErrorMessage(`Vault ${vaultName} does not exist`);
+      return false;
+    }
+
+    // If the vault is already unlocked, delete credential without unlocking
+    if (vault.isUnlocked) {
+      const success = vault.deleteCredential(credentialKey);
+      if (success) {
+        this.saveVaults();
+        return true;
+      }
+      return false;
+    }
+    
+    // Otherwise try to unlock it
+    if (password && vault.unlock(vaultName, password)) {
+      const success = vault.deleteCredential(credentialKey);
+      if (success) {
+        this.saveVaults();
+        return true;
+      }
+      return false;
+    }
+    
+    displayErrorMessage(`Cannot access vault ${vaultName} - Vault is locked. Please unlock it first.`);
+    return false;
   }
 }

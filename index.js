@@ -79,5 +79,125 @@ program
     vaultManager.unlockVault(name, password);
   });
 
+// Add command to store a credential in a vault
+program
+  .command("store")
+  .description("Store a credential in a vault (vault must be unlocked)")
+  .argument("<vault>", "Name of the vault to store the credential in")
+  .argument("<key>", "Name/key of the credential")
+  .argument("<value>", "Value of the credential")
+  .action(async (vaultName, key, value) => {
+    try {
+      const vault = vaultManager.vaults.get(vaultName);
+      
+      if (!vault) {
+        console.error(`Vault ${vaultName} does not exist`);
+        return;
+      }
+      
+      // Check if vault is unlocked
+      if (!vault.isUnlocked) {
+        console.error(`Cannot store credential in vault ${vaultName} - Vault is locked. Please unlock it first using 'npm-cred unlock ${vaultName}'`);
+        return;
+      }
+      
+      // Store credential since vault is already unlocked
+      const success = vaultManager.addCredential(
+        vaultName,
+        null, // No password needed when already unlocked
+        { key, value }
+      );
+      
+      if (!success) {
+        console.error("Failed to store credential.");
+      }
+    } catch (error) {
+      console.error("Failed to store credential:", error.message);
+    }
+  });
+
+// Add command to view credentials in a vault
+program
+  .command("view")
+  .description("View credentials in a vault (vault must be unlocked)")
+  .argument("<vault>", "Name of the vault to view credentials from")
+  .action(async (vaultName) => {
+    try {
+      const vault = vaultManager.vaults.get(vaultName);
+      
+      if (!vault) {
+        console.error(`Vault ${vaultName} does not exist`);
+        return;
+      }
+      
+      // Check if vault is unlocked
+      if (!vault.isUnlocked) {
+        console.error(`Cannot view vault ${vaultName} - Vault is locked. Please unlock it first using 'npm-cred unlock ${vaultName}'`);
+        return;
+      }
+      
+      // Get credentials since the vault is already unlocked
+      const credentials = vaultManager.getCredentials(vaultName, null);
+      
+      if (credentials.length === 0) {
+        console.warn("No credentials stored in this vault.");
+        return;
+      }
+      
+      console.log("\nCredentials in vault:", vaultName);
+      console.log("----------------------------------");
+      credentials.forEach((cred, index) => {
+        console.log(`${index + 1}. ${cred.key}: ${cred.value}`);
+      });
+      console.log("----------------------------------");
+    } catch (error) {
+      console.error("Failed to view credentials:", error.message);
+    }
+  });
+
+// Add command to delete a credential from a vault
+program
+  .command("delete-cred")
+  .description("Delete a credential from a vault (vault must be unlocked)")
+  .argument("<vault>", "Name of the vault containing the credential")
+  .argument("<key>", "Name/key of the credential to delete")
+  .action(async (vaultName, key) => {
+    try {
+      const vault = vaultManager.vaults.get(vaultName);
+      
+      if (!vault) {
+        console.error(`Vault ${vaultName} does not exist`);
+        return;
+      }
+      
+      // Check if vault is unlocked
+      if (!vault.isUnlocked) {
+        console.error(`Cannot delete credential from vault ${vaultName} - Vault is locked. Please unlock it first using 'npm-cred unlock ${vaultName}'`);
+        return;
+      }
+      
+      // Confirm deletion
+      const { confirm } = await inquirer.prompt([{
+        type: 'confirm',
+        name: 'confirm',
+        message: `Are you sure you want to delete credential "${key}"?`,
+        default: false
+      }]);
+      
+      if (!confirm) {
+        console.warn("Deletion cancelled.");
+        return;
+      }
+      
+      const success = vaultManager.deleteCredential(vaultName, null, key);
+      
+      if (!success) {
+        console.error("Failed to delete credential.");
+      }
+    } catch (error) {
+      console.error("Failed to delete credential:", error.message);
+    }
+  });
+
 // Ensure version command is handled by commander
 program.parse(process.argv);
