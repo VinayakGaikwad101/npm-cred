@@ -6,7 +6,7 @@ import {
 import { encrypt, decrypt } from "./crypto.js";
 
 class Vault {
-  constructor(name, password, isUnlocked = false) {
+  constructor(name, password, isUnlocked = false, initialEncryptedData = null) {
     if (!name) {
       displayErrorMessage("Name is required");
       return;
@@ -27,7 +27,7 @@ class Vault {
         );
         return;
       }
-      this.encryptedData = encrypt(this.credentials, password);
+      this.encryptedData = initialEncryptedData || encrypt([], password); // Use provided encrypted data or create new
       this.password = password; // Store password for locking/unlocking
     } else {
       this.encryptedData = null; // No password means no encryption
@@ -60,10 +60,14 @@ class Vault {
         return false;
       }
       try {
-        // Decrypt credentials when unlocking
-        this.credentials = decrypt(this.encryptedData, password);
-        this.isUnlocked = true; // Set the vault as unlocked
-        this.password = password; // Store password for future operations
+        // Decrypt credentials from encrypted data
+        const decryptedCredentials = decrypt(this.encryptedData, password);
+
+        // Update vault state
+        this.credentials = decryptedCredentials;
+        this.isUnlocked = true;
+        this.password = password;
+
         displaySuccessMessage(`Vault ${this.name} unlocked successfully`);
         return true;
       } catch (error) {
@@ -183,6 +187,7 @@ class Vault {
       encryptedData: this.encryptedData,
       isUnlocked: this.isUnlocked, // Save the lock state
       credentials: this.isUnlocked ? this.credentials : [], // Save credentials if unlocked
+      password: this.password, // Include password for proper vault initialization
     };
   }
 
@@ -191,12 +196,14 @@ class Vault {
     vault.encryptedData = json.encryptedData;
     vault.isUnlocked = json.isUnlocked; // Set the lock state from JSON
 
-    // If vault is unlocked, also restore credentials and password
+    // If vault is unlocked, restore credentials
     if (vault.isUnlocked && Array.isArray(json.credentials)) {
       vault.credentials = json.credentials;
-      if (password) {
-        vault.password = password;
-      }
+    }
+    
+    // Always set the password if provided, regardless of unlock state
+    if (password) {
+      vault.password = password;
     }
 
     return vault;
@@ -204,20 +211,28 @@ class Vault {
 
   // Generate a shareable ID containing encrypted vault data
   generateShareId() {
-    if (!this.encryptedData) {
-      displayErrorMessage("Cannot share an unencrypted vault");
+    if (!this.isUnlocked) {
+      displayErrorMessage("Vault must be unlocked to share");
       return null;
     }
 
-    // Create share data object with all necessary vault info
-    const shareData = {
-      name: this.name,
-      encryptedData: this.encryptedData,
-      password: this.password, // Include original password
-    };
+    try {
+      // Always re-encrypt current credentials to ensure they're included
+      // This ensures we have valid encrypted data even for empty credential lists
+      const encryptedData = encrypt(this.credentials, this.password);
+      
+      const shareData = {
+        name: this.name,
+        encryptedData: encryptedData,
+        password: this.password,
+      };
 
-    // Convert to base64
-    return Buffer.from(JSON.stringify(shareData)).toString("base64");
+      // Convert to base64
+      return Buffer.from(JSON.stringify(shareData)).toString("base64");
+    } catch (error) {
+      displayErrorMessage("Failed to generate share ID: " + error.message);
+      return null;
+    }
   }
 
   // Create a vault from a share ID
@@ -228,10 +243,24 @@ class Vault {
 
       // Create new vault with original name and password
       const vault = new Vault(shareData.name, shareData.password);
-      vault.encryptedData = shareData.encryptedData;
-      vault.isUnlocked = false; // Ensure vault is locked by default
 
-      return vault;
+      // Set the encrypted data and verify it's valid
+      try {
+        const decryptedCredentials = decrypt(
+          shareData.encryptedData,
+          shareData.password
+        );
+        vault.encryptedData = shareData.encryptedData;
+
+        // Store the decrypted credentials in the vault
+        // This is the fix - we need to store the credentials after decryption
+        vault.credentials = decryptedCredentials;
+
+        return vault;
+      } catch (error) {
+        displayErrorMessage("Invalid vault data in share ID");
+        return null;
+      }
     } catch (error) {
       displayErrorMessage("Invalid share ID");
       return null;

@@ -21,10 +21,15 @@ export class VaultManager {
         const data = readFileSync(vaultPath, "utf8");
         const vaultData = JSON.parse(data);
 
-        // Initialize vaults without decrypting (will decrypt on unlock)
+        // Initialize vaults with their passwords
         Object.entries(vaultData).forEach(([name, data]) => {
-          // Pass null as password when loading to skip validation
-          const vault = Vault.fromJSON(data, null);
+          // Create vault with its password to ensure proper initialization
+          const vault = new Vault(name, data.password);
+          vault.encryptedData = data.encryptedData;
+          vault.isUnlocked = data.isUnlocked;
+          if (data.isUnlocked && Array.isArray(data.credentials)) {
+            vault.credentials = data.credentials;
+          }
           this.vaults.set(name, vault);
         });
       } catch (error) {
