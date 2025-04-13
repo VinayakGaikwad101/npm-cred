@@ -386,6 +386,85 @@ export const deleteCredentialCommand = async () => {
   }
 };
 
+// Share vault command
+export const shareVaultCommand = async (vaultName) => {
+  try {
+    // Check if vault exists
+    const vault = vaultManager.vaults.get(vaultName);
+    if (!vault) {
+      displayErrorMessage(`Vault ${vaultName} does not exist`);
+      return;
+    }
+
+    // If vault is already unlocked, generate share ID
+    if (vault.isUnlocked) {
+      const shareId = vault.generateShareId();
+      if (shareId) {
+        console.log("\nShare ID for your vault:");
+        console.log("----------------------------------");
+        console.log(shareId);
+        console.log("----------------------------------");
+        displaySuccessMessage("Share this ID with the person you want to share the vault with.");
+      }
+      return;
+    }
+
+    // If vault is locked, ask for password
+    const passwordResponse = await inquirer.prompt([
+      {
+        type: "password",
+        name: "password",
+        message: "Enter vault password:",
+        validate: (input) => {
+          if (!input) {
+            return "Password is required";
+          }
+          return true;
+        },
+      },
+    ]);
+
+    const shareId = vaultManager.shareVault(vaultName, passwordResponse.password);
+    if (shareId) {
+      console.log("\nShare ID for your vault:");
+      console.log("----------------------------------");
+      console.log(shareId);
+      console.log("----------------------------------");
+      displaySuccessMessage("Share this ID with the person you want to share the vault with.");
+    }
+  } catch (error) {
+    displayErrorMessage("Failed to share vault: " + error.message);
+  }
+};
+
+// Receive vault command
+export const receiveVaultCommand = async () => {
+  try {
+    // Ask for share ID
+    const shareResponse = await inquirer.prompt([
+      {
+        type: "input",
+        name: "shareId",
+        message: "Enter the share ID:",
+        validate: (input) => {
+          if (!input) {
+            return "Share ID is required";
+          }
+          return true;
+        },
+      },
+    ]);
+
+    const success = vaultManager.receiveVault(shareResponse.shareId);
+
+    if (success) {
+      displaySuccessMessage("The vault is locked by default. Use 'unlock' command to access it.");
+    }
+  } catch (error) {
+    displayErrorMessage("Failed to receive vault: " + error.message);
+  }
+};
+
 export const vaultCommands = {
   create: createVaultCommand,
   lock: lockVaultCommand,
@@ -393,4 +472,6 @@ export const vaultCommands = {
   store: storeCredentialCommand,
   view: viewCredentialsCommand,
   delete: deleteCredentialCommand,
+  share: shareVaultCommand,
+  receive: receiveVaultCommand,
 };

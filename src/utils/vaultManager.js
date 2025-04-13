@@ -258,4 +258,53 @@ export class VaultManager {
     displayErrorMessage(`Cannot access vault ${vaultName} - Vault is locked. Please unlock it first.`);
     return false;
   }
+
+  // Generate a share ID for a vault
+  shareVault(vaultName, password) {
+    const vault = this.vaults.get(vaultName);
+    if (!vault) {
+      displayErrorMessage(`Vault ${vaultName} does not exist`);
+      return null;
+    }
+
+    // If vault is not unlocked, try to unlock it
+    if (!vault.isUnlocked && !vault.unlock(vaultName, password)) {
+      displayErrorMessage(`Cannot share vault ${vaultName} - Invalid password or vault is locked`);
+      return null;
+    }
+
+    const shareId = vault.generateShareId();
+    if (shareId) {
+      displaySuccessMessage(`Share ID generated for vault ${vaultName}`);
+      return shareId;
+    }
+    return null;
+  }
+
+  // Receive a shared vault
+  receiveVault(shareId) {
+    // Validate input
+    if (!shareId) {
+      displayErrorMessage("Share ID is required");
+      return false;
+    }
+
+    // Create new vault from share ID
+    const newVault = Vault.fromShareId(shareId);
+    if (!newVault) {
+      return false;
+    }
+
+    // Check if vault with same name already exists
+    if (this.vaults.has(newVault.name)) {
+      displayErrorMessage(`A vault with name ${newVault.name} already exists`);
+      return false;
+    }
+
+    // Add new vault to manager
+    this.vaults.set(newVault.name, newVault);
+    this.saveVaults();
+    displaySuccessMessage(`Vault ${newVault.name} received successfully`);
+    return true;
+  }
 }

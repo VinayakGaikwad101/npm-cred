@@ -199,5 +199,20 @@ program
     }
   });
 
+// Add command to share a vault
+program
+  .command("share")
+  .description("Share a vault by generating a share ID")
+  .argument("<vault>", "Name of the vault to share")
+  .action((vaultName) => {
+    vaultCommands.share(vaultName);
+  });
+
+// Add command to receive a shared vault
+program
+  .command("receive")
+  .description("Receive a shared vault using a share ID")
+  .action(vaultCommands.receive);
+
 // Ensure version command is handled by commander
 program.parse(process.argv);

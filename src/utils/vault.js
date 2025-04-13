@@ -117,8 +117,8 @@ class Vault {
         `A credential with the key "${credential.key}" already exists. Each credential name must be unique.`
       );
       return false;
-    } 
-    
+    }
+
     // Add the new credential
     this.credentials.push(credential);
 
@@ -182,7 +182,7 @@ class Vault {
       name: this.name,
       encryptedData: this.encryptedData,
       isUnlocked: this.isUnlocked, // Save the lock state
-      credentials: this.isUnlocked ? this.credentials : [] // Save credentials if unlocked
+      credentials: this.isUnlocked ? this.credentials : [], // Save credentials if unlocked
     };
   }
 
@@ -190,7 +190,7 @@ class Vault {
     const vault = new Vault(json.name, null); // Use null for password initially
     vault.encryptedData = json.encryptedData;
     vault.isUnlocked = json.isUnlocked; // Set the lock state from JSON
-    
+
     // If vault is unlocked, also restore credentials and password
     if (vault.isUnlocked && Array.isArray(json.credentials)) {
       vault.credentials = json.credentials;
@@ -198,8 +198,44 @@ class Vault {
         vault.password = password;
       }
     }
-    
+
     return vault;
+  }
+
+  // Generate a shareable ID containing encrypted vault data
+  generateShareId() {
+    if (!this.encryptedData) {
+      displayErrorMessage("Cannot share an unencrypted vault");
+      return null;
+    }
+
+    // Create share data object with all necessary vault info
+    const shareData = {
+      name: this.name,
+      encryptedData: this.encryptedData,
+      password: this.password, // Include original password
+    };
+
+    // Convert to base64
+    return Buffer.from(JSON.stringify(shareData)).toString("base64");
+  }
+
+  // Create a vault from a share ID
+  static fromShareId(shareId) {
+    try {
+      // Decode share data
+      const shareData = JSON.parse(Buffer.from(shareId, "base64").toString());
+
+      // Create new vault with original name and password
+      const vault = new Vault(shareData.name, shareData.password);
+      vault.encryptedData = shareData.encryptedData;
+      vault.isUnlocked = false; // Ensure vault is locked by default
+
+      return vault;
+    } catch (error) {
+      displayErrorMessage("Invalid share ID");
+      return null;
+    }
   }
 }
 
